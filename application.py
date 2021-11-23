@@ -63,22 +63,18 @@ class Scraper:
     def _proxy_request(self, url, query, proxy):
 
         proxy_dict = {"http": "http://" + proxy}
-        response = requests.get(
-            url, proxies=proxy_dict, timeout=5, params=query
-        )
+        response = requests.get(url, proxies=proxy_dict, timeout=5, params=query)
 
         return response.json()
-    
+
     def scrape_paper(self, paper_id: str, max_attempts=100):
-        
+
         api = "https://api.semanticscholar.org/graph/v1/paper/{}"
-        
-        query = {
-            'fields': 'title,venue,year,abstract,authors,references'    
-        }
-        
+
+        query = {"fields": "title,venue,year,abstract,authors,references"}
+
         proxy = self.proxy_store.get()
-        
+
         response = None
         for i in range(max_attempts):
             try:
@@ -92,22 +88,18 @@ class Scraper:
                 time.sleep(0.2)
 
                 break
-            
+
             except Exception as e:
                 self.proxy_store.drop(proxy)
                 proxy = self.proxy_store.get()
-                print('error', e)
-                
+                print("error", e)
+
         if response is not None:
             # pretty print
             print(json.dumps(response, sort_keys=True, indent=2))
             pass
-        
-        return response
 
-            
-                
-        
+        return response
 
 
 if __name__ == "__main__":
@@ -115,10 +107,10 @@ if __name__ == "__main__":
     proxyStore.start()
     scraper = Scraper(proxyStore)
 
-    paper = '649def34f8be52c8b66281af98ae884c09aef38b'
+    paper = "649def34f8be52c8b66281af98ae884c09aef38b"
 
     response = scraper.scrape_paper(paper, max_attempts=30)
-    for reference in [ref['paperId'] for ref in response['references']]:
+    for reference in [ref["paperId"] for ref in response["references"]]:
         scraper.scrape_paper(reference, max_attempts=30)
 
     proxyStore.stop()
