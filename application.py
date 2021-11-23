@@ -4,9 +4,8 @@
 import requests
 import threading
 import time
-import platform
 import random
-import subprocess
+
 
 class ProxyStoreThread(threading.Thread):
     def __init__(self):     
@@ -14,7 +13,7 @@ class ProxyStoreThread(threading.Thread):
         self._stop_event = threading.Event()   
         self.api = 'http://pubproxy.com/api/proxy'
         self.params = {
-            'level': 'anonymous', #anonymous
+            'level': 'anonymous', 
             'limit': 5,
             'type': 'http'
         }
@@ -57,7 +56,7 @@ class ProxyStoreThread(threading.Thread):
             self.retrieve_proxies()
             time.sleep(60)
         else:
-            print('Terminating ProxyStoreThread')
+            print('Terminating ProxyStoreThread for now')
     
 class Scraper:
     def __init__(self):
