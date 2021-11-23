@@ -15,10 +15,12 @@ class ProxyStoreThread(threading.Thread):
         self.api = 'http://pubproxy.com/api/proxy'
         self.params = {
             'level': 'anonymous', #anonymous
-            'limit': 5   
+            'limit': 5,
+            'type': 'http'
         }
         
         self.proxies = set([])
+        self.blacklist = set([])
         
     def stop(self):
         self._stop_event.set()
@@ -33,7 +35,8 @@ class ProxyStoreThread(threading.Thread):
             print('error retrieving')
         for host in response['data']:
             ip = host['ipPort']
-            self.proxies.add(ip)
+            if ip not in self.blacklist:
+                self.proxies.add(ip)
     
     def get(self):
         if len(self.proxies) < 5:
@@ -43,9 +46,14 @@ class ProxyStoreThread(threading.Thread):
     
     def drop(self, host):
         self.proxies.remove(host)
+        self.blacklist.add(host)
     
     def run(self):
         while not self.stopped():
+            
+            # reset blacklist every 60 seconds
+            self.blacklist = set([])
+            
             self.retrieve_proxies()
             time.sleep(60)
         else:
@@ -57,7 +65,7 @@ class Scraper:
     
     def proxy_request(self, url, query, proxy):
 
-        response = requests.get(url, proxies={'https': 'https://'+proxy}, timeout=5, params=query)
+        response = requests.get(url, proxies={'http': 'http://'+proxy}, timeout=5, params=query)
 
         return response.json()
 
@@ -66,7 +74,7 @@ if __name__ == "__main__":
     proxyStore.start()
     scraper = Scraper()
     
-    for i in range(3):
+    for i in range(10):
         proxy = proxyStore.get()
         while True:
             try:
