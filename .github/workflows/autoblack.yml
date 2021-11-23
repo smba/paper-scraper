@@ -1,16 +1,16 @@
-# GitHub Action that uses Black to reformat the Python code in an incoming pull request.
+ # GitHub Action that uses Black to reformat the Python code in an incoming pull request.
 # If all Python code in the pull request is compliant with Black then this Action does nothing.
 # Othewrwise, Black is run and its changes are committed back to the incoming pull request.
 # https://github.com/cclauss/autoblack
 
 name: autoblack
-on: [push]
+on: push
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3.9
+      - name: Seet up Python 3.9
         uses: actions/setup-python@v1
         with:
           python-version: 3.9
@@ -22,7 +22,7 @@ jobs:
         if: failure()
         run: |
           black .
-          git config --global user.name 'smba'
+          git config --global user.name 'autoblack'
           git config --global user.email ''
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
           git checkout $GITHUB_HEAD_REF
