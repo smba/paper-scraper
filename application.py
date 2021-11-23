@@ -71,7 +71,9 @@ class Scraper:
 
         api = "https://api.semanticscholar.org/graph/v1/paper/{}"
 
-        query = {"fields": "title,venue,year,abstract,authors,references,fieldsOfStudy,externalIds,referenceCount,citationCount"}
+        query = {
+            "fields": "title,venue,year,abstract,authors,references,fieldsOfStudy,externalIds,referenceCount,citationCount"
+        }
 
         proxy = self.proxy_store.get()
 
@@ -100,14 +102,11 @@ class Scraper:
             pass
 
         return response
-    
+
     def search_by_keyword(self, keywords: [], max_attempts=100):
         api = "https://api.semanticscholar.org/graph/v1/paper/search"
-        query = {
-            'query': '+'.join(keywords),
-            'fields': 'paperId,title,authors'
-        }
-    
+        query = {"query": "+".join(keywords), "fields": "paperId,title,authors"}
+
         proxy = self.proxy_store.get()
 
         response = None
@@ -135,14 +134,14 @@ class Scraper:
             pass
 
         return response
-    
+
     def scrape_author(self, author_id: str, max_attempts=100):
-        
+
         api = "https://api.semanticscholar.org/graph/v1/author/{}"
         query = {
-            'fields': 'authorId,paperCount,citationCount,hIndex,name,papers.abstract,papers.title,papers.year,papers.venue,papers.fieldsOfStudy'
+            "fields": "authorId,paperCount,citationCount,hIndex,name,papers.abstract,papers.title,papers.year,papers.venue,papers.fieldsOfStudy"
         }
-        
+
         proxy = self.proxy_store.get()
 
         response = None
@@ -166,17 +165,17 @@ class Scraper:
 
         if response is not None:
             # pretty print
-            #print(json.dumps(response, sort_keys=True, indent=2))
+            # print(json.dumps(response, sort_keys=True, indent=2))
             pass
 
         return response
-        
+
 
 if __name__ == "__main__":
     proxyStore = ProxyStoreThread()
     proxyStore.start()
     scraper = Scraper(proxyStore)
 
-    # scrape stuff    
+    # scrape stuff
 
     proxyStore.stop()
