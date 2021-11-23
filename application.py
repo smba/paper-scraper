@@ -56,7 +56,7 @@ class ProxyStoreThread(threading.Thread):
             self.retrieve_proxies()
             time.sleep(60)
         else:
-            print('Terminating ProxyStoreThread for now')
+            print('Terminating ProxyStoreThread for now!')
     
 class Scraper:
     def __init__(self):
