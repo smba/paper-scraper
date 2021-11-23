@@ -18,12 +18,37 @@ class ProxyStoreThread(threading.Thread):
         self.blacklist = set([])
 
     def stop(self):
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
         self._stop_event.set()
 
     def stopped(self):
+        """
+        
+
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
+
+        """
         return self._stop_event.is_set()
 
     def retrieve_proxies(self):
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
         try:
             response = requests.get(self.api, timeout=5, params=self.params).json()
         except Exception as e:
@@ -34,16 +59,46 @@ class ProxyStoreThread(threading.Thread):
                 self.proxies.add(ip)
 
     def get(self):
+        """
+        
+
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
+
+        """
         if len(self.proxies) < 5:
             self.retrieve_proxies()
         proxy = random.randint(0, len(self.proxies) - 1)
         return list(self.proxies)[proxy]
 
     def drop(self, host):
+        """
+        
+
+        Parameters
+        ----------
+        host : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         self.proxies.remove(host)
         self.blacklist.add(host)
 
     def run(self):
+        """
+        
+
+        Returns
+        -------
+        None.
+
+        """
         while not self.stopped():
 
             # reset blacklist every 60 seconds
@@ -59,7 +114,25 @@ class Scraper:
     def __init__(self):
         pass
 
-    def proxy_request(self, url, query, proxy):
+    def proxy_request(self, url: str, params: dict, proxy: str):
+        """
+        
+
+        Parameters
+        ----------
+        url : str
+            DESCRIPTION.
+        params : dict
+            DESCRIPTION.
+        proxy : str
+            DESCRIPTION.
+
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
+
+        """
 
         response = requests.get(
             url, proxies={"http": "http://" + proxy}, timeout=5, params=query
@@ -73,14 +146,14 @@ if __name__ == "__main__":
     proxyStore.start()
     scraper = Scraper()
 
-    for i in range(10):
+    for i in range(2):
         proxy = proxyStore.get()
         while True:
             try:
                 print(proxy)
                 res = scraper.proxy_request(
                     "https://api.semanticscholar.org/graph/v1/paper/649def34f8be52c8b66281af98ae884c09aef38b",
-                    {"fields": "authors"},
+                    {"fields": "references"},
                     proxy,
                 )
                 print(res)
