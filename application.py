@@ -19,7 +19,7 @@ class ProxyStoreThread(threading.Thread):
 
     def stop(self):
         """
-        
+
 
         Returns
         -------
@@ -30,7 +30,7 @@ class ProxyStoreThread(threading.Thread):
 
     def stopped(self):
         """
-        
+
 
         Returns
         -------
@@ -42,7 +42,7 @@ class ProxyStoreThread(threading.Thread):
 
     def retrieve_proxies(self):
         """
-        
+
 
         Returns
         -------
@@ -60,7 +60,7 @@ class ProxyStoreThread(threading.Thread):
 
     def get(self):
         """
-        
+
 
         Returns
         -------
@@ -75,7 +75,7 @@ class ProxyStoreThread(threading.Thread):
 
     def drop(self, host):
         """
-        
+
 
         Parameters
         ----------
@@ -92,7 +92,7 @@ class ProxyStoreThread(threading.Thread):
 
     def run(self):
         """
-        
+
 
         Returns
         -------
@@ -116,7 +116,7 @@ class Scraper:
 
     def proxy_request(self, url: str, params: dict, proxy: str):
         """
-        
+
 
         Parameters
         ----------
