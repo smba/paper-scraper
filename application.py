@@ -71,7 +71,7 @@ class Scraper:
 
         api = "https://api.semanticscholar.org/graph/v1/paper/{}"
 
-        query = {"fields": "title,venue,year,abstract,authors,references"}
+        query = {"fields": "title,venue,year,abstract,authors,references,fieldsOfStudy,externalIds,referenceCount,citationCount"}
 
         proxy = self.proxy_store.get()
 
@@ -100,17 +100,83 @@ class Scraper:
             pass
 
         return response
+    
+    def search_by_keyword(self, keywords: [], max_attempts=100):
+        api = "https://api.semanticscholar.org/graph/v1/paper/search"
+        query = {
+            'query': '+'.join(keywords),
+            'fields': 'paperId,title,authors'
+        }
+    
+        proxy = self.proxy_store.get()
 
+        response = None
+        for i in range(max_attempts):
+            try:
+                response = scraper._proxy_request(
+                    api,
+                    query,
+                    proxy,
+                )
+
+                # cool down
+                time.sleep(0.2)
+
+                break
+
+            except Exception as e:
+                self.proxy_store.drop(proxy)
+                proxy = self.proxy_store.get()
+                print("error", e)
+
+        if response is not None:
+            # pretty print
+            print(json.dumps(response, sort_keys=True, indent=2))
+            pass
+
+        return response
+    
+    def scrape_author(self, author_id: str, max_attempts=100):
+        
+        api = "https://api.semanticscholar.org/graph/v1/author/{}"
+        query = {
+            'fields': 'authorId,paperCount,citationCount,hIndex,name,papers.abstract,papers.title,papers.year,papers.venue,papers.fieldsOfStudy'
+        }
+        
+        proxy = self.proxy_store.get()
+
+        response = None
+        for i in range(max_attempts):
+            try:
+                response = scraper._proxy_request(
+                    api.format(author_id),
+                    query,
+                    proxy,
+                )
+
+                # cool down
+                time.sleep(0.2)
+
+                break
+
+            except Exception as e:
+                self.proxy_store.drop(proxy)
+                proxy = self.proxy_store.get()
+                print("error", e)
+
+        if response is not None:
+            # pretty print
+            #print(json.dumps(response, sort_keys=True, indent=2))
+            pass
+
+        return response
+        
 
 if __name__ == "__main__":
     proxyStore = ProxyStoreThread()
     proxyStore.start()
     scraper = Scraper(proxyStore)
 
-    paper = "649def34f8be52c8b66281af98ae884c09aef38b"
-
-    response = scraper.scrape_paper(paper, max_attempts=30)
-    for reference in [ref["paperId"] for ref in response["references"]]:
-        scraper.scrape_paper(reference, max_attempts=30)
+    # scrape stuff    
 
     proxyStore.stop()
