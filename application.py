@@ -6,14 +6,27 @@ import threading
 import time
 import random
 import json
+import logging
+import re
+
+
+def find(string):
+  
+    # findall() has been used 
+    # with valid conditions for urls in string
+    regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+    url = re.findall(regex,string)      
+    return [x[0] for x in url]
 
 
 class ProxyStoreThread(threading.Thread):
-    def __init__(self):
+    def __init__(self, refresh: int = 30):
         super(ProxyStoreThread, self).__init__()
         self._stop_event = threading.Event()
         self.api = "http://pubproxy.com/api/proxy"
         self.params = {"level": "anonymous", "limit": 5, "type": "http"}
+
+        self.refresh = refresh
 
         self.proxies = set([])
         self.blacklist = set([])
@@ -51,7 +64,8 @@ class ProxyStoreThread(threading.Thread):
             self.blacklist = set([])
 
             self.retrieve_proxies()
-            time.sleep(60)
+            
+            time.sleep(self.refresh)
         else:
             print("Terminating ProxyStoreThread for now!!")
 
@@ -59,27 +73,71 @@ class ProxyStoreThread(threading.Thread):
 class SciHubDownloader:
     def __init__(self, proxy_store, base="https://sci-hub.mksa.top/"):
         self.base = base
-        self.proxy_store = proxyStore
+        self.proxy_store = proxy_store
 
-    def fetch(self, doi, export_name="paper.pdf"):
+    def fetch(self, 
+              doi: str, 
+              max_attempts: int = 30,
+        ):
 
-        response = requests.get(self.base + doi).text
-        start = response.find("<embed type")
-        end = response.find("</embed>")
-        response = response[start:end]
-        pdf = (
-            "http://" + response[response.find('src="') + 7 : response.find(".pdf") + 4]
-        )
+        proxy = self.proxy_store.get()        
+        link = None
+        for i in range(max_attempts):
+            try:
+                proxy_dict={"http": "http://" + proxy}
+                target = self.base + doi
+                response = requests.get(target)
+                response = response.text
+            except Exception as e:
+                time.sleep(0.5)
+                self.proxy_store.drop(proxy)
+                proxy = self.proxy_store.get()
+                logging.warn(e)
+                continue
+             
+            start = response.find("<embed type")
+            end = response.find("</embed>")
+            response = response[start:end]
+            urls = find(response)
+            if len(urls) == 0:
+                break    
+            link = urls[0]
+            
+            pdf_loc = link.find('.pdf')
+            link = link[:pdf_loc+4]
+            if not link.startswith('http'):
+                link = 'https://'+link
+            break
+        
+        return link
+          
+    
+    def download(self, 
+                 pdf: str,
+                 export_name: str ="paper.pdf",
+                 max_attempts: int = 30
+        ):
 
-        proxy = self.proxy_store.get()
-        r = requests.get(pdf, proxies={"http": "http://" + proxy}, stream=True)
+        downloaded = False
+        proxy = self.proxy_store.get()   
+        for i in range(max_attempts):
+            try:
+                r = requests.get(pdf, proxies={"http": 'http://'+proxy}, stream=True)
+            except Exception as e:
+                time.sleep(0.1)
+                self.proxy_store.drop(proxy)
+                proxy = self.proxy_store.get()
+                logging.warn(e)
+                continue
 
-        # if export_name is None:
-        #    doix = doi.replace('/','-')
-        #    name = doix+'pdf'
-        with open(export_name, "wb") as fd:
-            for chunk in r.iter_content(101):  # number is chunksize
-                fd.write(chunk)
+            with open(export_name, "wb") as fd:
+                for chunk in r.iter_content(100):  # number is chunksize
+                    fd.write(chunk)
+                    
+            downloaded = True
+            break
+        
+        return downloaded
 
 
 class Scraper:
@@ -106,7 +164,7 @@ class Scraper:
         response = None
         for i in range(max_attempts):
             try:
-                response = scraper._proxy_request(
+                response = self._proxy_request(
                     api.format(paper_id),
                     query,
                     proxy,
@@ -138,7 +196,7 @@ class Scraper:
         response = None
         for i in range(max_attempts):
             try:
-                response = scraper._proxy_request(
+                response = self._proxy_request(
                     api,
                     query,
                     proxy,
@@ -173,7 +231,7 @@ class Scraper:
         response = None
         for i in range(max_attempts):
             try:
-                response = scraper._proxy_request(
+                response = self._proxy_request(
                     api.format(author_id),
                     query,
                     proxy,
@@ -196,30 +254,3 @@ class Scraper:
 
         return response
         s = scraper.scrape_paper("de2eb091c0f3219d23c5d249fc1ca6ff272fffd9")
-
-
-if __name__ == "__main__":
-    proxyStore = ProxyStoreThread()
-    proxyStore.start()
-    scraper = Scraper(proxyStore)
-
-    # scrape stuff
-    # s = scraper.search_by_keyword("identifying performance changes across variants and versions".split(" "))
-    # print(s)
-
-    sh = SciHubDownloader(proxyStore)
-    s = scraper.scrape_paper("de2eb091c0f3219d23c5d249fc1ca6ff272fffd9")
-    ids = [t["paperId"] for t in s["references"]]
-    for idx in ids:
-        try:
-            s = scraper.scrape_paper(idx)
-            doi = s["externalIds"]["DOI"]
-            title = s["title"]
-            print(title)
-            sh.fetch(doi, export_name=title.replace(" ", "_") + ".pdf")
-        except Exception as e:
-            print(e)
-    # sh = SciHubDownloader()
-    # result = sh.fetch(doi, export_name=title.replace(' ', '_')+'.pdf')
-
-    proxyStore.stop()
