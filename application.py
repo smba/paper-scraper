@@ -11,11 +11,11 @@ import re
 
 
 def find(string):
-  
-    # findall() has been used 
+
+    # findall() has been used
     # with valid conditions for urls in string
     regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
-    url = re.findall(regex,string)      
+    url = re.findall(regex, string)
     return [x[0] for x in url]
 
 
@@ -64,7 +64,7 @@ class ProxyStoreThread(threading.Thread):
             self.blacklist = set([])
 
             self.retrieve_proxies()
-            
+
             time.sleep(self.refresh)
         else:
             print("Terminating ProxyStoreThread for now!!")
@@ -75,16 +75,17 @@ class SciHubDownloader:
         self.base = base
         self.proxy_store = proxy_store
 
-    def fetch(self, 
-              doi: str, 
-              max_attempts: int = 30,
-        ):
+    def fetch(
+        self,
+        doi: str,
+        max_attempts: int = 30,
+    ):
 
-        proxy = self.proxy_store.get()        
+        proxy = self.proxy_store.get()
         link = None
         for i in range(max_attempts):
             try:
-                proxy_dict={"http": "http://" + proxy}
+                proxy_dict = {"http": "http://" + proxy}
                 target = self.base + doi
                 response = requests.get(target)
                 response = response.text
@@ -94,35 +95,32 @@ class SciHubDownloader:
                 proxy = self.proxy_store.get()
                 logging.warn(e)
                 continue
-             
+
             start = response.find("<embed type")
             end = response.find("</embed>")
             response = response[start:end]
             urls = find(response)
             if len(urls) == 0:
-                break    
+                break
             link = urls[0]
-            
-            pdf_loc = link.find('.pdf')
-            link = link[:pdf_loc+4]
-            if not link.startswith('http'):
-                link = 'https://'+link
+
+            pdf_loc = link.find(".pdf")
+            link = link[: pdf_loc + 4]
+            if not link.startswith("http"):
+                link = "https://" + link
             break
-        
+
         return link
-          
-    
-    def download(self, 
-                 pdf: str,
-                 export_name: str ="paper.pdf",
-                 max_attempts: int = 30
-        ):
+
+    def download(
+        self, pdf: str, export_name: str = "paper.pdf", max_attempts: int = 30
+    ):
 
         downloaded = False
-        proxy = self.proxy_store.get()   
+        proxy = self.proxy_store.get()
         for i in range(max_attempts):
             try:
-                r = requests.get(pdf, proxies={"http": 'http://'+proxy}, stream=True)
+                r = requests.get(pdf, proxies={"http": "http://" + proxy}, stream=True)
             except Exception as e:
                 time.sleep(0.1)
                 self.proxy_store.drop(proxy)
@@ -133,10 +131,10 @@ class SciHubDownloader:
             with open(export_name, "wb") as fd:
                 for chunk in r.iter_content(100):  # number is chunksize
                     fd.write(chunk)
-                    
+
             downloaded = True
             break
-        
+
         return downloaded
 
 
