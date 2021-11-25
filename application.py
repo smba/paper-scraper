@@ -55,6 +55,26 @@ class ProxyStoreThread(threading.Thread):
         else:
             print("Terminating ProxyStoreThread for now!!")
 
+class SciHubDownloader:
+    def __init__(self, base='https://sci-hub.mksa.top/'):
+        self.base = base
+    
+    def fetch(self, doi, export_name='paper.pdf'):
+        
+        response = requests.get(self.base+doi).text
+        start = response.find('<embed type')
+        end = response.find('</embed>')
+        response = response[start:end]
+        pdf = 'http://'+response[response.find('src="')+7:response.find('.pdf')+4]
+        
+        r = requests.get(pdf, stream=True)
+
+        #if export_name is None:
+        #    doix = doi.replace('/','-')
+        #    name = doix+'pdf'
+        with open(export_name, 'wb') as fd:
+            for chunk in r.iter_content(1):
+                fd.write(chunk)
 
 class Scraper:
     def __init__(self, proxy_store: ProxyStoreThread):
@@ -71,9 +91,7 @@ class Scraper:
 
         api = "https://api.semanticscholar.org/graph/v1/paper/{}"
 
-        query = {
-            "fields": "title,venue,year,abstract,authors,references,fieldsOfStudy,externalIds,referenceCount,citationCount"
-        }
+        query = {"fields": "title,venue,year,abstract,authors,references,fieldsOfStudy,externalIds,referenceCount,citationCount"}
 
         proxy = self.proxy_store.get()
 
@@ -102,11 +120,14 @@ class Scraper:
             pass
 
         return response
-
+    
     def search_by_keyword(self, keywords: [], max_attempts=100):
         api = "https://api.semanticscholar.org/graph/v1/paper/search"
-        query = {"query": "+".join(keywords), "fields": "paperId,title,authors"}
-
+        query = {
+            'query': '+'.join(keywords),
+            'fields': 'paperId,title,authors'
+        }
+    
         proxy = self.proxy_store.get()
 
         response = None
@@ -134,14 +155,14 @@ class Scraper:
             pass
 
         return response
-
+    
     def scrape_author(self, author_id: str, max_attempts=100):
-
+        
         api = "https://api.semanticscholar.org/graph/v1/author/{}"
         query = {
-            "fields": "authorId,paperCount,citationCount,hIndex,name,papers.abstract,papers.title,papers.year,papers.venue,papers.fieldsOfStudy"
+            'fields': 'authorId,paperCount,citationCount,hIndex,name,papers.abstract,papers.title,papers.year,papers.venue,papers.fieldsOfStudy'
         }
-
+        
         proxy = self.proxy_store.get()
 
         response = None
@@ -165,17 +186,25 @@ class Scraper:
 
         if response is not None:
             # pretty print
-            # print(json.dumps(response, sort_keys=True, indent=2))
+            #print(json.dumps(response, sort_keys=True, indent=2))
             pass
 
         return response
-
+        
 
 if __name__ == "__main__":
     proxyStore = ProxyStoreThread()
     proxyStore.start()
     scraper = Scraper(proxyStore)
 
-    # scrape stuff
+    # scrape stuff    
+    #s = scraper.search_by_keyword("identifying performance changes across variants and versions".split(" "))
+    #print(s)
+    s = scraper.scrape_paper('de2eb091c0f3219d23c5d249fc1ca6ff272fffd9')
+    title = s['title']
+    doi = s['externalIds']['DOI']
 
+    sh = SciHubDownloader()
+    result = sh.fetch(doi, export_name=title.replace(' ', '_')+'.pdf')
+    
     proxyStore.stop()
