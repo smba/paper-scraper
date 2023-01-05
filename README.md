@@ -1,5 +1,10 @@
 # SemanticScholar API Scraper
-## Example Usage
+Scraper for the SemanticScholar API using a set of anonymous proxies and downloading PDFs from SciHub. Tests wanted, bugs included.
+
+**!!! Only for demonstration purposes, please 
+respect API quotas and author copyrights. !!!**
+
+## Documentation
 
 ```python
 import application as app
