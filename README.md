@@ -16,7 +16,7 @@ scraper = app.Scraper(proxy_store)
 seed = "b395775f1bcd80416b93f6380cea999063e0589d"
 
 # Retrieve all references from a paper
-res = scraper.scrape_paper("")
+res = scraper.scrape_paper(seed)
 refs = [ref["paperId"] for ref in res["references"]]
 refs = list(filter(lambda r: r is not None, refs))
 
