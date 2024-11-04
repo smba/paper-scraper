@@ -1,5 +1,5 @@
 # SemanticScholar API Scraper
-Scraper for the SemanticScholar API using a set of anonymous proxies and downloading PDFs from SciHub. Tests wanted, bugs included.
+Scraper for the SemanticScholar API using a pool of public proxies for downloading PDFs from SciHub. Tests wanted, bugs included.
 
 **!!! Only for demonstration purposes, please 
 respect API quotas and author copyrights. !!!**
