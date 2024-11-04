@@ -245,10 +245,4 @@ class Scraper:
                 proxy = self.proxy_store.get()
                 print("error", e)
 
-        if response is not None:
-            # pretty print
-            # print(json.dumps(response, sort_keys=True, indent=2))
-            pass
-
         return response
-        s = scraper.scrape_paper("de2eb091c0f3219d23c5d249fc1ca6ff272fffd9")
