@@ -1,7 +1,7 @@
 # SemanticScholar API Scraper
 Scraper for the SemanticScholar API using a pool of public proxies for downloading PDFs from SciHub. **
 
-## Documentation
+## Example Usage
 
 ```python
 import application as app
